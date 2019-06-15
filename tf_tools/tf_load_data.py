@@ -331,3 +331,11 @@ with tf.Session() as sess:
         image_data, image_label, image_name = sess.run(iterator.get_next())
         print(image_name)
 '''
+'''
+********************************************************************************************
+TensorFlow tf.data 导入数据（tf.data官方教程） * * * * *
+https://blog.csdn.net/u014061630/article/details/80728694
+https://blog.csdn.net/u014061630/article/details/80712635#1_tfdata_API_14
+********************************************************************************************
+
+'''
