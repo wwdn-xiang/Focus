@@ -117,6 +117,25 @@ class TF_Utils(object):
                 f.write(output_graph_def.SerializeToString())
             print("finish frozen model!")
 
+    @staticmethod
+    def _parse_function_(image_name, image_label):
+        image_string = tf.read_file(image_name)
+        image_data = tf.image.decode_jpeg(image_string)
+
+        label_string = tf.read_file(image_label)
+        image_label = tf.image.decode_png(label_string)
+
+        return image_data, image_label
+
+    @staticmethod
+    def get_seg_data_iterator(image_abpaths_list, image_labels_list, buffer_size, batch_size, epoch):
+
+        dataset = tf.data.Dataset.from_tensor_slices((image_abpaths_list, image_labels_list))
+        dataset = dataset.map(TF_Utils._parse_function_)
+        dataset = dataset.shuffle(buffer_size=(buffer_size)).batch(batch_size).repeat(epoch)
+        iterator = dataset.make_one_shot_iterator()
+        return iterator.get_next()
+
 
 if __name__ == '__main__':
     TF_Utils.pb2tfboard("/1_data/xxh_workspace/SEG_DCIS_IDC/freeze_model/fcn_model.pb")
