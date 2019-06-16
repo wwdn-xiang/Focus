@@ -169,9 +169,89 @@ MODE=2
 初始化所有的操作
 启动QueueRunner
 '''
+
+
 # TODO https://www.cnblogs.com/upright/p/6136265.html
 
 
+def gen_tfrcords(dataset_dir, task, mode, tfrecords_dir):
+    assert os.path.isdir(dataset_dir)
+    assert task in ['Classification', 'Segmentation', 'Detection']
+    assert mode in [1, 2]
+
+    if mode == 1:
+        dataset_split = os.listdir(dataset_dir)
+        if task == "Classification":
+            for data_type in dataset_split:
+                writer = tf.python_io.TFRecordWriter(os.path.join(tfrecords_dir, "%s.tfrecords" % (data_type)))
+                data_type_dir = os.path.join(dataset_dir, data_type)
+                category = os.listdir(data_type_dir)
+                for index, one_class in enumerate(category):
+                    one_class_dir = os.path.join(data_type_dir, one_class)
+                    one_class_image_names = os.listdir(one_class_dir)
+                    for image_name in one_class_image_names:
+                        img_abs_path = os.path.join(one_class_dir, image_name)
+                        raw_img = Image.open(img_abs_path)
+                        img_raw = raw_img.tobytes()  # 将图片转化为原生bytes
+                        example = tf.train.Example(features=tf.train.Features(feature={
+                            "label": tf.train.Feature(int64_list=tf.train.Int64List(value=[index])),
+                            'img_raw': tf.train.Feature(bytes_list=tf.train.BytesList(value=[img_raw]))
+                        }))
+                        writer.write(example.SerializeToString())
+                writer.close()
+        elif task == "Segmentation":
+            for data_type in dataset_split:
+                writer = tf.python_io.TFRecordWriter(os.path.join(tfrecords_dir, "%s.tfrecords" % (data_type)))
+                images_dir = os.path.join(dataset_dir, data_type + "/" + "images")
+                masks_dir = os.path.join(dataset_dir, data_type + "/" + "seg_mask")
+                images_name = os.listdir(images_dir)
+                for image_name in images_name:
+                    mask_name = image_name.replace(".jpg", ".png")
+                    img_abs_path = os.path.join(images_dir, image_name)
+                    msk_abs_path = os.path.islink(masks_dir, mask_name)
+
+                    raw_img = Image.open(img_abs_path)
+                    img_raw = raw_img.tobytes()
+
+                    msk_img = Image.open(msk_abs_path)
+                    msk_raw = msk_img.tobytes()
+                    example = tf.train.Example(features=tf.train.Features(feature={
+                        "msk_raw": tf.train.Feature(int64_list=tf.train.BytesList(value=[msk_raw])),
+                        'img_raw': tf.train.Feature(bytes_list=tf.train.BytesList(value=[img_raw]))
+                    }))
+                    writer.write(example.SerializeToString())
+
+                writer.close()
+        else:
+            pass
+
+    if mode == 2:
+        '''
+        ./dataset_name/
+						+/images
+								dog/
+								panda/
+								bike
+								car/
+								......
+						+/annotations
+								train.txt
+								validation.txt
+								test.txt
+							'''
+        annotations_dir = os.path.join(dataset_dir, "annotations")
+        images_dir = os.path.join(dataset_dir, "images")
+        dataset_split = os.listdir(annotations_dir)
+        for data_type in dataset_split:
+            data_type_name = data_type.split(".")[0]
+            writer = tf.python_io.TFRecordWriter(os.path.join(tfrecords_dir, "%s.tfrecords" % (data_type_name)))
+            with open(os.path.join(annotations_dir, data_type)) as f:
+                lines = f.readlines()
+                for line in lines:
+                    line = line.strip()
+    #TODO
+
+'''
 dataset_dir = './dataset_name'
 writer = tf.python_io.TFRecordWriter("train.tfrecords")
 for index, name in enumerate(classes):
@@ -188,10 +268,10 @@ for index, name in enumerate(classes):
     writer.write(example.SerializeToString())  # 序列化为字符串
 writer.close()
 
-'''
+
 使用队列读取
 一旦生成了TFRecords文件，接下来就可以使用队列（queue）读取数据了。
-'''
+
 
 
 def read_and_decode(filename):
@@ -231,3 +311,4 @@ with tf.Session() as sess:
         # 我们也可以根据需要对val， l进行处理
         # l = to_categorical(l, 12)
         print(val.shape, l)
+'''
