@@ -18,6 +18,7 @@ from tensorflow.python import pywrap_tensorflow
 from tensorflow.python.framework import graph_util
 from nets import inception_v3
 from nets import nets_factory
+from PIL import Image
 
 
 class TF_Utils(object):
@@ -34,7 +35,7 @@ class TF_Utils(object):
         var_to_shape_map = reader.get_variable_to_shape_map()
         for key in var_to_shape_map:
             print("tensor_name: ", key)
-            print(reader.get_tensor(key))
+            # print(reader.get_tensor(key))
 
     @staticmethod
     def get_op_name_value_from_pb(pb_path):
@@ -136,6 +137,27 @@ class TF_Utils(object):
         iterator = dataset.make_one_shot_iterator()
         return iterator.get_next()
 
+    @staticmethod
+    def load_model(pb_path, input_tensor, output_tensor):
+        '''
+        :param pb_path: the frozen tensorflow pb file path  e.g. '/1_data/xxh_workspace/SEG_DCIS_IDC/deeplab/data/frozen_model/frozen.pb'
+        :param input_tensor:  the model input tensor name e.g. "ImageTensor:0"
+        :param output_tensor: the model output tensor name e.g. "SemanticPredictions:0"
+        :return:
+        '''
+        with tf.Graph().as_default():
+            output_graph_def = tf.GraphDef()
+            with open(pb_path, "rb") as f:
+                output_graph_def.ParseFromString(f.read())
+                tf.import_graph_def(output_graph_def, name="")
+
+            with tf.Session() as sess:
+                sess.run(tf.global_variables_initializer())
+                net_input = sess.graph.get_tensor_by_name()
+                net_output = sess.graph.get_tensor_by_name()
+                #seg_output = sess.run(net_output, feed_dict={net_input: value})
+
+
 
 if __name__ == '__main__':
-    TF_Utils.pb2tfboard("/1_data/xxh_workspace/SEG_DCIS_IDC/freeze_model/fcn_model.pb")
+    TF_Utils.get_op_name_value_from_pb("/1_data/xxh_workspace/SEG_DCIS_IDC/deeplab/data/frozen_model/frozen.pb")
