@@ -155,8 +155,7 @@ class TF_Utils(object):
                 sess.run(tf.global_variables_initializer())
                 net_input = sess.graph.get_tensor_by_name()
                 net_output = sess.graph.get_tensor_by_name()
-                #seg_output = sess.run(net_output, feed_dict={net_input: value})
-
+                # seg_output = sess.run(net_output, feed_dict={net_input: value})
 
 
 if __name__ == '__main__':
