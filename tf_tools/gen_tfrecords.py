@@ -249,7 +249,8 @@ def gen_tfrcords(dataset_dir, task, mode, tfrecords_dir):
                 lines = f.readlines()
                 for line in lines:
                     line = line.strip()
-    #TODO
+    # TODO
+
 
 '''
 dataset_dir = './dataset_name'

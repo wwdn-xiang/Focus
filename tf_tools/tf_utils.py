@@ -100,8 +100,8 @@ class TF_Utils(object):
         '''
         ckpt = tf.train.get_checkpoint_state(ckpt_dir)
         ckpt_path = ckpt.model_checkpoint_path
-        network_fn = nets_factory.get_network_fn('inception_v3', 5)
-        x = tf.placeholder(shape=[None, None, None, 3], dtype=tf.uint8, name="input")
+        network_fn = nets_factory.get_network_fn('inception_v3', 2)
+        x = tf.placeholder(shape=[None, None, None, 3], dtype=tf.float32, name="input")
         logits, end_points = network_fn(x)
         saver = tf.train.Saver()
         print("freeze model from ckpt :", ckpt_path)
@@ -157,6 +157,46 @@ class TF_Utils(object):
                 net_output = sess.graph.get_tensor_by_name()
                 # seg_output = sess.run(net_output, feed_dict={net_input: value})
 
+    @staticmethod
+    def freez2good(inputmodel_path, output_dir):
+        '''
+        :param inputmodel_path: model.pb
+        :param output_dir:
+        :return:
+        '''
+        import os
+
+        os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+        import tensorflow as tf
+
+        from tensorflow.python.platform import gfile
+
+        model_path = inputmodel_path
+
+        # read graph definition
+        f = gfile.FastGFile(model_path, "rb")
+        gd = graph_def = tf.GraphDef()
+        graph_def.ParseFromString(f.read())
+
+        # fix nodes
+        for node in graph_def.node:
+            if node.op == 'RefSwitch':
+                node.op = 'Switch'
+                for index in range(len(node.input)):
+                    if 'moving_' in node.input[index]:
+                        node.input[index] = node.input[index] + '/read'
+            elif node.op == 'AssignSub':
+                node.op = 'Sub'
+                if 'use_locking' in node.attr: del node.attr['use_locking']
+
+        # import graph into session
+        tf.import_graph_def(graph_def, name='')
+        tf.train.write_graph(graph_def, './', 'good_frozen.pb', as_text=False)
+        tf.train.write_graph(graph_def, './', 'good_frozen.pbtxt', as_text=True)
+
 
 if __name__ == '__main__':
-    TF_Utils.get_op_name_value_from_pb("/1_data/xxh_workspace/SEG_DCIS_IDC/deeplab/data/frozen_model/frozen.pb")
+    # TF_Utils.freeze_model_from_forward_ckpt(
+    #     '/1_data/xxh_workspace/SEG_DCIS_IDC/classification_wyn/10x_32_data/dataset/train_logs/',
+    #     'InceptionV3/Logits/classes', './model.pb')
+    TF_Utils.get_op_name_value_from_pb('/1_data/xxh_workspace/SEG_DCIS_IDC/classification_wyn/10x_32_data/dataset/freeze_model/he.pb')
