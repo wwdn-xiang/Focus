@@ -20,8 +20,6 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 import tensorflow as tf
 
-import xception
-
 slim = tf.contrib.slim
 
 
@@ -37,7 +35,7 @@ class XceptionTest(tf.test.TestCase):
         with self.test_session():
             inputs = tf.random_uniform((batch_size, height, width, 3))
 
-            logits, end_points = xception.xception(inputs, num_classes)
+            logits, end_points = Classification.xception.xception(inputs, num_classes)
 
             # Entry Flow
 
@@ -95,7 +93,7 @@ class XceptionTest(tf.test.TestCase):
         with self.test_session():
             eval_inputs = tf.random_uniform((batch_size, height, width, 3))
 
-            logits, _ = xception.xception(eval_inputs, is_training=False)
+            logits, _ = Classification.xception.xception(eval_inputs, is_training=False)
 
             self.assertListEqual(logits.get_shape().as_list(),
 
@@ -113,7 +111,7 @@ class XceptionTest(tf.test.TestCase):
         with self.test_session() as sess:
             inputs = tf.random_uniform((batch_size, height, width, 3))
 
-            logits, _ = xception.xception(inputs)
+            logits, _ = Classification.xception.xception(inputs)
 
             sess.run(tf.global_variables_initializer())
 
