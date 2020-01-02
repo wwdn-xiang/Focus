@@ -1,0 +1,29 @@
+自定义op参考链接：https://blog.csdn.net/xiangxianghehe/article/details/81002227（主要）
+
+
+注意：
+gitee.com 是github的复制版，码云，下载速度快！
+-b 是指branch
+r   是指定版本
+第一步：git clone https://gitee.com/mirrors/tensorflow.git -b r1.10
+
+第二步：cd ./tensorflow/tensorflow/core/user_ops	#进入user_ops 目录下
+
+第三步：TF_CFLAGS=( $(python3 -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_compile_flags()))') )
+
+其中python3 也可以使用成python（对应Python2版本）
+
+第四步：TF_LFLAGS=( $(python3 -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_link_flags()))') )	#python3与第三步同理。
+
+第五步：g++ -std=c++11 -shared my_add.cc -o my_add.so -fPIC ${TF_CFLAGS[@]} ${TF_LFLAGS[@]} -O2
+
+	其中，	my_add.cc为自定义的C/C++自定义Op文件
+		my_add.so为输出文件(-o,即output)
+
+
+
+参考案例：
+https://blog.csdn.net/sinat_37532065/article/details/92085177（在训练/测试时，使用该自定义op）
+https://blog.csdn.net/u012614287/article/details/89682133（自定义op中文注释较为完整）
+http://tensorfly.cn/tfdoc/api_docs/SOURCE/how_tos/adding_an_op.html（TensorFlow官方文档）
+https://cloud.tencent.com/developer/section/1475696（腾讯云---->作为以后问题检索网站）
